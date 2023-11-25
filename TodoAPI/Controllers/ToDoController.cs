@@ -1,5 +1,8 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using TodoAPI.services;
+using System.Data.Entity;
+using TodoAPI.DTO;
+using TodoAPI.Entities;
+
 
 namespace TodoAPI.Controllers
 {
@@ -8,18 +11,47 @@ namespace TodoAPI.Controllers
     [Route("[controller]")]
     public class ToDoController : ControllerBase
     {
-        private readonly ToDoService _toDoService;
+        public AppDbContext db;
 
-        public ToDoController(ToDoService toDoService)
+
+        public ToDoController(AppDbContext applicationDbContext)
         {
-            _toDoService = toDoService;
+            db = applicationDbContext;
         }
 
 
-        [HttpGet]
-        public  string GetTodos()
+        //[HttpGet]
+        //public  string GetTodos()
+        //{
+        //    return _toDoService.GetTodos();
+        //}
+
+        [HttpPost]
+        public async Task<IActionResult> ToDoAdd([FromBody] ToDoAddDto dto)
         {
-            return _toDoService.GetTodos();
+
+            try
+            {
+                ToDo todo = new ToDo();
+                todo.tittle = dto.tittle;
+                todo.description = dto.description;
+                db.Todos.Add(todo);
+                await db.SaveChangesAsync();
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(400);
+            }
+
+
+            return Ok();
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> ToDoGetAll()
+        {
+            return Ok(db.Set<ToDo>().ToList());
         }
     }
 }
+
